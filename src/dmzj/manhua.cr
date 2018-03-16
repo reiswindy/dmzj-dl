@@ -1,3 +1,4 @@
+require "file_utils"
 require "json"
 require "http"
 require "modest"
@@ -27,7 +28,9 @@ class Dmzj::Manhua
     end
   end
 
-  def download(chapter : String)
+  def download(chapter : String, output_dir : String = __DIR__)
+    FileUtils.mkdir_p(output_dir)
+
     chapter_html = fetch_chapter_html(chapter.to_i)
     chapter_js = chapter_html.css("script:not([src])").first.inner_text
 
@@ -40,13 +43,21 @@ class Dmzj::Manhua
     url = pages_url.first
     pages_url.each_with_index do |url, i|
       puts "Fetching page #{i + 1} from #{url}"
-      filename = File.join([__DIR__, "#{i + 1}.jpg"])
-      File.write(filename, fetch_image(sprintf(IMG_DMZJ, url), chapters[chapter.to_i].href))
+
+      filename = File.join([output_dir, "#{i + 1}.jpg"])
+      File.open(filename, "w") do |file_io|
+        fetch_image(sprintf(IMG_DMZJ, url), chapters[chapter.to_i].href) do |http_io|
+          file_io << http_io.gets_to_end
+        end
+      end
     end
   end
 
   def fetch_info_html
     url = sprintf(DMZJ, @manhua_name)
+
+    puts "Fetching information page..."
+
     body = fetch_html(url)
     if body == "漫画不存在"
       raise "Manhua does not exist"
@@ -56,6 +67,9 @@ class Dmzj::Manhua
 
   def fetch_chapter_html(chapter : Int32)
     url = chapters[chapter.to_i].href
+
+    puts "Fetching chapter page..."
+
     body = fetch_html(url)
     Myhtml::Parser.new(body)
   end
@@ -73,14 +87,16 @@ class Dmzj::Manhua
       "Host"    => DMZJ_HOST,
       "Referer" => referer,
     }
-    response = HTTP::Client.get(url, headers)
-    if response.status_code != 200
-      raise "Failed to fetch image. Status Code: #{response.status_code}"
+
+    HTTP::Client.get(url, headers) do |response|
+      if response.status_code != 200
+        raise "Failed to fetch image. Status Code: #{response.status_code}"
+      end
+      if response.headers["Content-Type"] != "image/jpeg"
+        raise "Failed to fetch image. Content-Type was #{response.headers["Content-Type"]}"
+      end
+      yield response.body_io
     end
-    if response.headers["Content-Type"] != "image/jpeg"
-      raise "Failed to fetch image. Content-Type was #{response.headers["Content-Type"]}"
-    end
-    response.body
   end
 end
 
