@@ -1,0 +1,20 @@
+name: dmzj.cr
+version: 0.1.0
+
+authors:
+  - reiswindy <megamanbn@gmail.com>
+
+targets:
+  dmzj:
+    main: src/dmzj.cr
+
+dependencies:
+  duktape:
+    github: jessedoyle/duktape.cr
+    version: ~> 0.13.0
+  modest:
+    github: kostya/modest
+
+crystal: 0.24.2
+
+license: MIT

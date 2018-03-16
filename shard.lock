@@ -1,0 +1,14 @@
+version: 1.0
+shards:
+  duktape:
+    github: jessedoyle/duktape.cr
+    version: 0.13.0
+
+  modest:
+    github: kostya/modest
+    version: 0.14
+
+  myhtml:
+    github: kostya/myhtml
+    version: 0.27
+
