@@ -1,12 +1,13 @@
 require "file_utils"
 require "json"
 require "http"
+require "uri"
 require "modest"
 require "duktape/runtime"
 
 class Dmzj::Manhua
-  DMZJ      = "https://www.dmzj.com/info/%s.html"
-  IMG_DMZJ  = "https://images.dmzj.com/%s"
+  DMZJ      = "https://www.dmzj.com"
+  IMG_DMZJ  = "https://images.dmzj.com"
   DMZJ_HOST = "images.dmzj.com"
 
   record Chapter, number : Int32, name : String, href : String do
@@ -17,6 +18,8 @@ class Dmzj::Manhua
 
   @manhua_name : String
   @manhua_html : Myhtml::Parser
+  @information_client : HTTP::Client?
+  @download_client : HTTP::Client?
 
   def initialize(@manhua_name : String)
     @manhua_html = fetch_info_html
@@ -39,14 +42,12 @@ class Dmzj::Manhua
     pages = pages.gsub("\r\n", "|")
 
     pages_url = JSON.parse(pages)["page_url"].as_s.split("|")
-
-    url = pages_url.first
-    pages_url.each_with_index do |url, i|
-      puts "Fetching page #{i + 1} from #{url}"
+    pages_url.each_with_index do |image_url_path, i|
+      puts "Fetching page #{i + 1} from #{image_url_path}"
 
       filename = File.join([output_dir, "#{i + 1}.jpg"])
       File.open(filename, "w") do |file_io|
-        fetch_image(sprintf(IMG_DMZJ, url), chapters[chapter.to_i].href) do |http_io|
+        fetch_image(image_url_path, chapters[chapter.to_i].href) do |http_io, content_length|
           file_io << http_io.gets_to_end
         end
       end
@@ -54,11 +55,11 @@ class Dmzj::Manhua
   end
 
   def fetch_info_html
-    url = sprintf(DMZJ, @manhua_name)
+    url_path = "/info/#{@manhua_name}.html"
 
     puts "Fetching information page..."
 
-    body = fetch_html(url)
+    body = fetch_html(url_path)
     if body == "漫画不存在"
       raise "Manhua does not exist"
     end
@@ -66,40 +67,49 @@ class Dmzj::Manhua
   end
 
   def fetch_chapter_html(chapter : Int32)
-    url = chapters[chapter.to_i].href
+    url_path = URI.parse(chapters[chapter.to_i].href).path.to_s
 
     puts "Fetching chapter page..."
 
-    body = fetch_html(url)
+    body = fetch_html(url_path)
     Myhtml::Parser.new(body)
   end
 
-  private def fetch_html(url)
-    response = HTTP::Client.get(url)
+  private def fetch_html(url_path)
+    information_client.connect_timeout = 10.seconds
+    information_client.read_timeout = 10.seconds
+
+    response = information_client.get(url_path)
     if response.status_code != 200
       raise "Failed to fetch html. Status Code: #{response.status_code}"
     end
     response.body
   end
 
-  private def fetch_image(url, referer)
+  private def fetch_image(image_url_path, referer)
     headers = HTTP::Headers{
       "Host"    => DMZJ_HOST,
       "Referer" => referer,
     }
 
-    HTTP::Client.get(url, headers) do |response|
+    download_client.connect_timeout = 10.seconds
+    download_client.read_timeout = 10.seconds
+    download_client.get("/#{image_url_path}", headers) do |response|
       if response.status_code != 200
         raise "Failed to fetch image. Status Code: #{response.status_code}"
       end
       if response.headers["Content-Type"] != "image/jpeg"
         raise "Failed to fetch image. Content-Type was #{response.headers["Content-Type"]}"
       end
-      yield response.body_io
+      yield response.body_io, response.headers["Content-Length"]
     end
   end
-end
 
-# bpanduro@bcp.com.pe
-# nombres completos
-# celular
+  private def information_client
+    @information_client ||= HTTP::Client.new(URI.parse(DMZJ))
+  end
+
+  private def download_client
+    @download_client ||= HTTP::Client.new(URI.parse(IMG_DMZJ))
+  end
+end
