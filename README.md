@@ -1,27 +1,42 @@
-# dmzj.cr
+# dmzj-dl
 
-TODO: Write a description here
+Tool for downloading manhua
 
 ## Installation
 
-TODO: Write installation instructions here
+```
+git clone git@github.com:reiswindy/dmzj-dl.git
+cd dmzj-dl
+shards build --production
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+List chapters of a manhua
+```shell
+$ ./dmzj chapters <manhua>
+```
 
-## Development
+Output is `<index> - <chapter_title>`
 
-TODO: Write development instructions here
+Example:
+```shell
+$ ./dmzj chapters liuzhuanyueguang
+Fetching information page...
+0 - 流转钥光第01话危险的钥匙 2018-03-13
+1 - 流转钥光第02话 一半的光明 2018-03-15
+```
 
-## Contributing
+Download chapter using the chapter_index
+```shell
+$ ./dmzj download <manhua> <chapter_index>
+```
 
-1. Fork it ( https://github.com/[your-github-name]/dmzj.cr/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request
+Example:
+```shell
+$ ./dmzj download musexunxiang 0
+```
 
 ## Contributors
 
-- [[your-github-name]](https://github.com/[your-github-name])  - creator, maintainer
+- [reiswindy](https://github.com/reiswindy) - creator, maintainer

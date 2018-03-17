@@ -34,7 +34,7 @@ HELP_MSG
 
   private def show_help_download
     puts <<-HELP_MSG
-USAGE: dmzj download <manhua> <chapter>
+USAGE: dmzj download <manhua> <chapter_index>
 HELP_MSG
   end
 
