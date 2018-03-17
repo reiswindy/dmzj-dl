@@ -18,6 +18,7 @@ class Dmzj::Manhua
 
   @manhua_name : String
   @manhua_html : Myhtml::Parser
+  @chapters : Array(Chapter)?
   @information_client : HTTP::Client?
   @download_client : HTTP::Client?
 
@@ -26,7 +27,7 @@ class Dmzj::Manhua
   end
 
   def chapters
-    @manhua_html.css("div.zj_list_con:not(.tab-content-selected) ul.list_con_li a").map_with_index do |node, i|
+    @chapters ||= @manhua_html.css("div.zj_list_con:not(.tab-content-selected) ul.list_con_li a").map_with_index do |node, i|
       Chapter.new(i, node.attributes["title"], node.attributes["href"])
     end
   end
