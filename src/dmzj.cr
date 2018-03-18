@@ -1,64 +1,45 @@
+require "clim"
 require "./dmzj/*"
 
 # TODO: Write documentation for `Dmzj`
 module Dmzj
-  extend self
-
-  def run(args)
-    case command = args.shift?
-    when "chapters"
-      list_chapters(args)
-    when "download"
-      download_chapter(args)
-    else
-      show_help
-    end
-  end
-
-  private def show_help
-    puts <<-HELP_MSG
-USAGE: dmzj <command> [arguments]
-
-Commands:
-  chapters    list available chapters from a given manhua
-  download    download a chapter from given manhua
-  help        show this message
-HELP_MSG
-  end
-
-  private def show_help_chapters
-    puts <<-HELP_MSG
-USAGE: dmzj chapters <manhua>
-HELP_MSG
-  end
-
-  private def show_help_download
-    puts <<-HELP_MSG
-USAGE: dmzj download <manhua> <chapter_index>
-HELP_MSG
-  end
-
-  private def list_chapters(args)
-    if manhua_name = args.shift?
-      manhua = Dmzj::Manhua.new(manhua_name)
-      manhua.chapters.each { |e| puts e.info }
-    else
-      show_help_chapters
-    end
-  end
-
-  private def download_chapter(args)
-    if manhua_name = args.shift?
-      if chapter = args.shift?
-        manhua = Dmzj::Manhua.new(manhua_name)
-        manhua.download(chapter)
-      else
-        show_help_download
+  class App < Clim
+    main_command do
+      desc("Manhua downloading tool")
+      usage("dmzj [command] [arguments]")
+      version("Version #{Dmzj::VERSION}")
+      run do |options, arguments|
+        puts options.help
       end
-    else
-      show_help_download
+      sub_command("chapters") do
+        desc("List available chapters (chapter index, title and date)")
+        usage("dmzj chapters <manhua>")
+        run do |options, arguments|
+          if manhua_name = arguments.shift?
+            manhua = Dmzj::Manhua.new(manhua_name)
+            manhua.chapters.each { |chapter| puts chapter.info }        
+          else
+            puts options.help
+          end
+        end
+      end
+      sub_command("download") do
+        desc("Download a chapter")
+        usage("dmzj download <manhua> <chapter_index>")
+        option("-o DESTINATION", "--output-dir=DESTINATION", type: String, desc: "Destination folder", default: "#{__DIR__}")
+        run do |options, arguments|
+          manhua_name = arguments.shift?
+          chapter_index = arguments.shift?
+          if manhua_name && chapter_index
+            manhua = Dmzj::Manhua.new(manhua_name)
+            manhua.download(chapter_index, options.output_dir)
+          else
+            puts options.help
+          end
+        end
+      end
     end
   end
 end
 
-Dmzj.run(ARGV)
+Dmzj::App.start(ARGV)

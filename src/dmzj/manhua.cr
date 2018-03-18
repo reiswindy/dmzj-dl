@@ -32,7 +32,7 @@ class Dmzj::Manhua
     end
   end
 
-  def download(chapter : String, output_dir : String = __DIR__)
+  def download(chapter : String, output_dir : String)
     FileUtils.mkdir_p(output_dir)
 
     chapter_html = fetch_chapter_html(chapter.to_i)
@@ -44,7 +44,7 @@ class Dmzj::Manhua
 
     pages_url = JSON.parse(pages)["page_url"].as_s.split("|")
     pages_url.each_with_index do |image_url_path, i|
-      puts "Fetching page #{i + 1} from #{image_url_path}"
+      puts "Fetching page #{i + 1}..."
 
       filename = File.join([output_dir, "#{i + 1}.jpg"])
       File.open(filename, "w") do |file_io|
@@ -58,7 +58,7 @@ class Dmzj::Manhua
   def fetch_info_html
     url_path = "/info/#{@manhua_name}.html"
 
-    puts "Fetching information page..."
+    puts "Fetching information..."
 
     body = fetch_html(url_path)
     if body == "漫画不存在"
@@ -70,7 +70,7 @@ class Dmzj::Manhua
   def fetch_chapter_html(chapter : Int32)
     url_path = URI.parse(chapters[chapter.to_i].href).path.to_s
 
-    puts "Fetching chapter page..."
+    puts "Fetching chapter..."
 
     body = fetch_html(url_path)
     Myhtml::Parser.new(body)
@@ -82,7 +82,7 @@ class Dmzj::Manhua
 
     response = information_client.get(url_path)
     if response.status_code != 200
-      raise "Failed to fetch html. Status Code: #{response.status_code}"
+      raise "Failed to fetch. Status Code: #{response.status_code}"
     end
     response.body
   end
