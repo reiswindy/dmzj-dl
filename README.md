@@ -17,12 +17,12 @@ List chapters of a manhua
 $ ./dmzj chapters <manhua>
 ```
 
-Output is `<index> - <chapter_title>`
+Output is `<chapter_index> - <chapter_title> <upload date>`
 
 Example:
 ```shell
 $ ./dmzj chapters liuzhuanyueguang
-Fetching information page...
+Fetching information...
 0 - 流转钥光第01话危险的钥匙 2018-03-13
 1 - 流转钥光第02话 一半的光明 2018-03-15
 ```
@@ -39,4 +39,4 @@ $ ./dmzj download musexunxiang 0
 
 ## Contributors
 
-- [reiswindy](https://github.com/reiswindy) - creator, maintainer
+- [reiswindy](https://github.com/reiswindy) - creator
